@@ -7,7 +7,8 @@ const visitorsSchema = new Schema({
     ip : {type:String, required:true},
     device : {type:String, required:true},
     city: {type:String, required:true},
-    country:{type:String, required:true}
+    country:{type:String, required:true},
+    
 }, 
 {
     versionKey:false,
