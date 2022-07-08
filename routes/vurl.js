@@ -17,17 +17,25 @@ router.get('/:scode', async (req, res) => {
         // const ip = req.headers['http-x-forwarded-for'] || req.connection.remoteAddress;
         const ip ='117.99.164.238'
         const visitor = await visitors.findOne({ip: ip})
+        const device = req.device.type;
+        const city = geoip.lookup(ip).city;
+        const country = geoip.lookup(ip).country;
         // console.log(visitor.ip)
         if(visitor)
         {
             await Urls.findOneAndUpdate({code : code}, {$inc : {'total' : 1}})
+            await visitors.create({
+              urlid,
+              ip,
+              device,
+              city,
+              country
+            })
             console.log('from if')
             return res.json(url.furl);
         }
         else {
-        const device = req.device.type;
-        const city = geoip.lookup(ip).city;
-        const country = geoip.lookup(ip).country;
+        
          await visitors.create({
           urlid,
           ip,
@@ -66,6 +74,8 @@ router.get('/:scode', async (req, res) => {
       
     }
   })
+
+
 
 
 
