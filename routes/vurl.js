@@ -16,9 +16,9 @@ router.get('/:scode', async (req, res) => {
         const urlid = url._id;
         // const ip = req.headers['http-x-forwarded-for'] || req.connection.remoteAddress;
         const ip ='117.99.164.238'
-        const visitor = await visitors.findOne({ip: ip})
+        const visitor = await visitors.findOne({ip: ip, urlid : urlid})
         const device = req.device.type;
-        const city = geoip.lookup(ip).city;
+        const city = geoip.lookup(ip).city; 
         const country = geoip.lookup(ip).country;
         // console.log(visitor.ip)
         if(visitor)
@@ -32,7 +32,7 @@ router.get('/:scode', async (req, res) => {
               country
             })
             console.log('from if')
-            return res.json(url.furl);
+            return res.redirect(url.furl);
         }
         else {
         
@@ -46,7 +46,7 @@ router.get('/:scode', async (req, res) => {
           await Urls.findOneAndUpdate({code : code},{$inc : {'unique' : 1, 'total' : 1}})
         
         console.log('from else')
-        return res.json(url.furl);}
+        return res.redirect(url.furl);}
       } 
       
       else res.status(404).json('Not found');
@@ -64,10 +64,24 @@ router.get('/:scode', async (req, res) => {
     try {
       const code = req.params.code
       const url = await Urls.findOne({code:code})
-      console.log(url)
-      if(url){
-        res.json({"unique": url.unique, "total" : url.total})
-      }
+      const condition = {
+        "urlid" : url._id,
+        "createdAt": {'$gte': new Date('2022/07'), '$lte':  Date.now()},
+        }
+        visitors.find(condition, function(err, response){
+            
+            if (!err){
+                let unique = [...new Set(response.map(item => item.ip))];
+                
+                res.json({
+                    "total" : response.length,
+                    "unique" : unique.length,
+                    "desktop" : response.filter(x => x.device === 'desktop').length,
+                    "mobile" : response.filter(x => x.device === 'phone').length 
+                });
+            }
+        });
+    
       
     } catch (error) {
       console.log(error)
