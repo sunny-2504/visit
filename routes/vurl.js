@@ -5,6 +5,7 @@ const device = require('express-device');
 const visitors = require('../models/visitors');
 router.use(device.capture())
 const geoip = require('geoip-lite')
+var Sniffr = require('sniffr');
 
 router.get('/:scode', async (req, res) => {
     try {
@@ -15,11 +16,17 @@ router.get('/:scode', async (req, res) => {
       if (url) {
         const urlid = url._id;
         // const ip = req.headers['http-x-forwarded-for'] || req.connection.remoteAddress;
+        const header = req.headers['user-agent'];
         const ip ='117.99.164.238'
         const visitor = await visitors.findOne({ip: ip, urlid : urlid})
         const device = req.device.type;
         const city = geoip.lookup(ip).city; 
         const country = geoip.lookup(ip).country;
+        const sniffr = new Sniffr();
+        sniffr.sniff(header);
+        const os = sniffr.os.name;
+        console.log(os) 
+
         // console.log(visitor.ip)
         if(visitor)
         {
@@ -29,10 +36,11 @@ router.get('/:scode', async (req, res) => {
               ip,
               device,
               city,
-              country
+              country,
+              os
             })
             console.log('from if')
-            return res.redirect(url.furl);
+            return res.redirect(`//${url.furl}`);
         }
         else {
         
@@ -41,12 +49,13 @@ router.get('/:scode', async (req, res) => {
           ip,
           device,
           city,
-          country
+          country,
+          os
         })
           await Urls.findOneAndUpdate({code : code},{$inc : {'unique' : 1, 'total' : 1}})
         
         console.log('from else')
-        return res.redirect(url.furl);}
+        return res.redirect(`//${url.furl}`);}
       } 
       
       else res.status(404).json('Not found');
@@ -88,6 +97,26 @@ router.get('/:scode', async (req, res) => {
       
     }
   })
+
+  //get request to get latest two visitor
+  router.post('/latestVisitors', async (req, res) => {
+    try {
+      const userid = req.body.userid
+      const url = await Urls.find({userid:userid})
+      const urlid = url.map(x => x._id)
+      const condition = {
+        "urlid" : {$in : urlid},
+        }
+      const visitors = await visitors.find(condition).sort({createdAt: -1}).limit(2)
+      res.json(visitors)
+    } catch (error) {
+      console.log(error)
+    
+    }
+  })
+
+
+
 
 
 

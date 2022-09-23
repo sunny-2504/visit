@@ -8,6 +8,7 @@ const visitorsSchema = new Schema({
     device : {type:String, required:true},
     city: {type:String, required:true},
     country:{type:String, required:true},
+    os : {type:String, required:true},
     
 }, 
 {
